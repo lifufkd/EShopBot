@@ -38,7 +38,7 @@ def main():
         elif message.text == '🍯Купить голду':
             bot.send_message(message.chat.id, text='Ваш баланс:\n')
         elif message.text == '📨Вывод':
-            bot.send_message(message.chat.id, text='Сколько вы хотите вывести голды?',
+            bot.send_message(message.chat.id, text='❗️Вывод работает от 100G❗️\nСколько вы хотите вывести голды?',
                              reply_markup=buttons.withdrawal_btns())
         elif message.text == '😄Отзывы':
             bot.send_message(message.chat.id, text='https://t.me/AdviceOTZIVI')
