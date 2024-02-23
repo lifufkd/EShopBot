@@ -49,7 +49,7 @@ def main():
         elif message.text == '✨Посчитать рубли в голде':
             bot.send_message(message.chat.id, text='✍️Введите сумму (в RUB)')
         elif message.text == '✨Посчитать голду в рублях':
-            bot.send_message(message.chat.id, text='✍️ Введите сумму (в голде)')
+            bot.send_message(message.chat.id, text='✍️Введите сумму (в голде)')
         elif message.text == '🏠Главное меню':
             hello_msg(message, buttons)
         elif message.text == '👨‍💻Поддержка':
