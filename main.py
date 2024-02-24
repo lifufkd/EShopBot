@@ -3,16 +3,26 @@
 #                SBR                #
 #               zzsxd               #
 #####################################
+import os
+import platform
 import telebot
+from threading import Lock
+from config_parser import ConfigParser
+from backend import DbAct, TempUserData
+from db import DB
 from frontend import Bot_inline_btns
-
 #####################################
-tg_api = '6628019426:AAEuM4jtTC0xvdZ8bbk6bwOOxQqkNBzxngQ'
-bot = telebot.TeleBot(tg_api)
-from frontend import Bot_inline_btns
-
-
+config_name = 'secrets.json'
 ####################################################################
+
+def broadcast_msg(user_id):
+    if db_actions.get_user(user_id) is not None and db_actions.get_request_by_user_id(user_id) is not None:
+        personal_data = db_actions.get_user(user_id)
+        for admin in db_actions.get_admins():
+            bot.send_message(admin, f'Новый пользователь!\nНикнейм: @{personal_data[0]}\nИмя: {personal_data[1]}\nФамилия: '
+                                    f'{personal_data[2]}\nID Пользователя: {user_id}\nID обращения: '
+                                    f'{db_actions.get_request_by_user_id(user_id)}\nПодтвердите верификацию '
+                                    f'(/accept "ID обращения") или отклоните (/reject "ID обращения")')
 
 
 def main():
@@ -62,4 +72,11 @@ def main():
 
 
 if '__main__' == __name__:
+    os_type = platform.system()
+    work_dir = os.path.dirname(os.path.realpath(__file__))
+    config = ConfigParser(f'{work_dir}/{config_name}', os_type)
+    db = DB(f'{work_dir}/{config.get_config()["db_file_name"]}', Lock(), config.get_config())
+    temp_user_data = TempUserData()
+    db_actions = DbAct(db, config.get_config())
+    bot = telebot.TeleBot(config.get_config()['tg_api'])
     main()
