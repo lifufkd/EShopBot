@@ -28,7 +28,18 @@ class DB:
             money TEXT,
             gold TEXT,
             role BOOLEAN,
+            nickname TEXT,
+            first_name TEXT,
+            last_name TEXT,
             UNIQUE(tg_id)
+            )
+            ''')
+            self.__cursor.execute('''
+            CREATE TABLE request(
+            request_id INTEGER primary key autoincrement not null,
+            tg_id INTEGER,
+            quanity INTEGER,
+            type BOOL
             )
             ''')
             self.__db.commit()
