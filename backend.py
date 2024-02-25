@@ -14,7 +14,7 @@ class TempUserData:
 
     def temp_data(self, user_id):
         if user_id not in self.__user_data.keys():
-            self.__user_data.update({user_id: [None, None]})
+            self.__user_data.update({user_id: [None, None, None]})
         return self.__user_data
 
 
@@ -23,7 +23,10 @@ class DbAct:
         super(DbAct, self).__init__()
         self.__db = db
         self.__config = config
-
+    def get_money(self, user_id):
+        money = self.__db.db_read('SELECT money, gold FROM users WHERE tg_id =?', (user_id, ))
+        if len(money) > 0:
+            return money[0]
     def add_user(self, user_id, nickname, first_name, last_name):
         if user_id in self.__config['admins']:
             role = True

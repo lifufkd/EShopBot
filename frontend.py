@@ -22,14 +22,13 @@ class Bot_inline_btns:
     def main_chat_btns(self):
             keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
             replenish = types.KeyboardButton(text="💰Пополнить")
-            buy_gold = types.KeyboardButton(text="🍯Купить голду")
             withdrawal = types.KeyboardButton(text="📨Вывод")
             reviews = types.KeyboardButton(text="😄Отзывы")
             course = types.KeyboardButton(text="📉Курс")
             calculator = types.KeyboardButton(text="🔢Калькулятор")
             support = types.KeyboardButton(text="👨‍💻Поддержка")
             profile = types.KeyboardButton(text="🤖Профиль")
-            keyboard.add(replenish, buy_gold, withdrawal, reviews, course, calculator, support, profile)
+            keyboard.add(replenish, withdrawal, reviews, course, calculator, support, profile)
             return keyboard
     def calculator_btns(self):
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
