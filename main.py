@@ -5,6 +5,7 @@
 #####################################
 import os
 import platform
+import random
 import telebot
 from threading import Lock
 from config_parser import ConfigParser
@@ -23,18 +24,26 @@ def hello_msg(message, buttons):
                                            '📊Курс: 0.66', reply_markup=buttons.main_chat_btns())
 
 
-def broadcast_msg(user_id, msg_id, type, money):
+def broadcast_msg(user_id, type, money, msg_id=None):
     buttons = Bot_inline_btns()
     type_msg = {False: f'Запрос на пополнение баланса на сумму {money}', True: f'Запрос на вывод голды на сумму {money}'}
     if db_actions.get_request_by_user_id(user_id, type) is not None:
         personal_data = db_actions.get_user(user_id)
-        for admin in db_actions.get_admins():
-            bot.send_message(admin, f'{type_msg[type]}\nНикнейм: @{personal_data[0]}\nИмя: {personal_data[1]}\nФамилия: '
-                                    f'{personal_data[2]}\nID Пользователя: {user_id}\nID обращения: '
-                                    f'{db_actions.get_request_by_user_id(user_id, type)}\nПодтвердите верификацию ',
-                             reply_markup=buttons.accept_deny_btns(db_actions.get_request_by_user_id(user_id, type)))
-            bot.forward_message(chat_id=admin, from_chat_id=user_id, message_id=msg_id)
-
+        admins = db_actions.get_admins()
+        if not type:
+            for admin in admins:
+                bot.send_message(admin, f'{type_msg[type]}\nНикнейм: @{personal_data[0]}\nИмя: {personal_data[1]}\nФамилия: '
+                                        f'{personal_data[2]}\nID Пользователя: {user_id}\nID обращения: '
+                                        f'{db_actions.get_request_by_user_id(user_id, type)}\nПодтвердите верификацию ',
+                                 reply_markup=buttons.accept_deny_btns(db_actions.get_request_by_user_id(user_id, type)))
+                bot.forward_message(chat_id=admin, from_chat_id=user_id, message_id=msg_id)
+        else:
+            random_admin = random.choice(admins)
+            db_actions.update_dialog_status(random_admin, db_actions.get_request_by_user_id(user_id, type))
+            bot.send_message(random_admin,
+                             f'{type_msg[type]}\nНикнейм: @{personal_data[0]}\nИмя: {personal_data[1]}\nФамилия: '
+                             f'{personal_data[2]}\nID Пользователя: {user_id}\nID обращения: '
+                             f'{db_actions.get_request_by_user_id(user_id, type)}\nПодтвердите верификацию ')
 
 def main():
     @bot.message_handler(commands=['start'])
@@ -69,12 +78,15 @@ def main():
                         bot.send_message(message.chat.id, '❌Введена неверная сумма❌')
                 elif code == 1:
                     db_actions.add_request(user_id, temp_user_data.temp_data(user_id)[user_id][1], False)
-                    broadcast_msg(user_id, message.id, False, temp_user_data.temp_data(user_id)[user_id][1])
+                    broadcast_msg(user_id, False, temp_user_data.temp_data(user_id)[user_id][1], message.id)
                     temp_user_data.temp_data(user_id)[user_id][0] = None
                 elif code == 2:
                     try:
                         if int(message.text) < 100:
                             raise
+                        db_actions.add_request(user_id, int(message.text), True)
+                        broadcast_msg(user_id, True, int(message.text))
+                        temp_user_data.temp_data(user_id)[user_id][0] = None
                         temp_user_data.temp_data(user_id)[user_id][1] = int(message.text)
                         temp_user_data.temp_data(user_id)[user_id][0] = 3
                     except:
@@ -120,23 +132,20 @@ def main():
                     bot.send_message(message.chat.id, text=f'📋Информация о {message.from_user.first_name}\n💸Денег: 0₽ '
                                                            f'руб\n🍯Золото: 0G')
                 elif user_id in db_actions.get_admins():
-                    candidate_id, type = db_actions.get_request_by_request_id(message.text[8:])
+                    candidate_id = db_actions.get_request_by_request_id(message.text[8:])
                     if candidate_id is not None:
                         if message.text[:7] == '✅accept':
-                            if not type:
-                                db_actions.add_money(candidate_id, message.text[8:])
-                                db_actions.convert_money_to_gold(candidate_id)
-                                bot.send_message(candidate_id, '✅Заявка одобрена, баланс пополнен!✅')
-                            else:
-                                pass
+                            db_actions.add_money(candidate_id, message.text[8:])
+                            db_actions.convert_money_to_gold(candidate_id)
+                            bot.send_message(candidate_id, '✅Заявка одобрена, баланс пополнен!✅')
                         elif message.text[:7] == '❌reject':
-                            if not type:
-                                bot.send_message(candidate_id, '❌Заявка отклонена, чек неверный❌')
-                            else:
-                                pass
+                            bot.send_message(candidate_id, '❌Заявка отклонена, чек неверный❌')
                         db_actions.del_request_by_request_id(message.text[8:])
+                    elif db_actions.get_dialog_status(user_id) is not None:
+                        client_id = db_actions.get_request_by_request_id(db_actions.get_dialog_status(user_id))
+                        bot.forward_message(chat_id=client_id, from_chat_id=user_id, message_id=message.id)
                     else:
-                        bot.send_message(user_id, '❌ID заявки не существует❌')
+                        bot.send_message(user_id, '❌Нет доступных действий❌')
 
         else:
             bot.send_message(user_id, 'Введите /start для запуска бота')
