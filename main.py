@@ -138,25 +138,25 @@ def main():
                     print(admin_id)
                     bot.forward_message(chat_id=admin_id, from_chat_id=user_id, message_id=message.id)
                 elif message.text == '💰Пополнить':
-                    if db_actions.quanity_not_busy_admins() > 0:
-                        if db_actions.get_request_by_user_id(user_id, False) is None:
-                            bot.send_message(message.chat.id, text='✏ Введите сумму для пополнения баланса в рублях',
-                                             reply_markup=buttons.replenish_btns())
-                            temp_user_data.temp_data(user_id)[user_id][0] = 0
+                    if db_actions.get_request_by_user_id(user_id, False) is None:
+                        bot.send_message(message.chat.id, text='✏ Введите сумму для пополнения баланса в рублях',
+                                         reply_markup=buttons.replenish_btns())
+                        temp_user_data.temp_data(user_id)[user_id][0] = 0
+                    else:
+                        bot.send_message(message.chat.id, text='✅Заявка уже создана✅')
+                elif message.text == '🍯Купить голду':
+                    bot.send_message(message.chat.id, text='Ваш баланс:\n')
+                elif message.text == '📨Вывод':
+                    if len(db_actions.get_admins_not_busy()) > 0:
+                        if db_actions.get_request_by_user_id(user_id, True) is None:
+                            bot.send_message(message.chat.id,
+                                             text='❗️Вывод работает от 100G❗️\nСколько вы хотите вывести голды?',
+                                             reply_markup=buttons.withdrawal_btns())
+                            temp_user_data.temp_data(user_id)[user_id][0] = 2
                         else:
                             bot.send_message(message.chat.id, text='✅Заявка уже создана✅')
                     else:
                         bot.send_message(message.chat.id, text='❌Все модераторы заняты❌')
-                elif message.text == '🍯Купить голду':
-                    bot.send_message(message.chat.id, text='Ваш баланс:\n')
-                elif message.text == '📨Вывод':
-                    if db_actions.get_request_by_user_id(user_id, True) is None:
-                        bot.send_message(message.chat.id,
-                                         text='❗️Вывод работает от 100G❗️\nСколько вы хотите вывести голды?',
-                                         reply_markup=buttons.withdrawal_btns())
-                        temp_user_data.temp_data(user_id)[user_id][0] = 2
-                    else:
-                        bot.send_message(message.chat.id, text='✅Заявка уже создана✅')
                 elif message.text == '😄Отзывы':
                     bot.send_message(message.chat.id, text='https://t.me/AdviceOTZIVI')
                 elif message.text == '📉Курс':

@@ -100,16 +100,12 @@ class DbAct:
         admins = self.__db.db_read(f'SELECT tg_id, current_dialog FROM users WHERE role = "1"', ())
         if len(admins) > 0:
             for i in admins:
+                print(i)
                 if i[1] is None:
                     data.append(i[0])
         else:
             data = []
         return set(data)
-
-    def quanity_not_busy_admins(self):
-        quanity = self.__db.db_read('SELECT count(*) FROM users WHERE role = "1" AND current_dialog = NULL', ())
-        if len(quanity) > 0:
-            return quanity[0][0]
 
     def get_request_by_request_id(self, request):
         request = self.__db.db_read('SELECT tg_id FROM request WHERE request_id = ?', (request, ))
