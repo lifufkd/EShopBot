@@ -32,7 +32,7 @@ class DbAct:
             role = True
         else:
             role = None
-        self.__db.db_write('INSERT OR IGNORE INTO users (tg_id, nickname, first_name, last_name, money, gold, role) VALUES (?, ?, ?, ?, ?, ?, ?)', (user_id, nickname, first_name, last_name, 0, 0, role))
+        self.__db.db_write('INSERT OR IGNORE INTO users (tg_id, nickname, first_name, last_name, money, gold, role, dialog_open) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', (user_id, nickname, first_name, last_name, 0, 0, role, False))
 
     def user_is_existed(self, user_id):
         data = self.__db.db_read('SELECT count(*) FROM users WHERE tg_id = ?', (user_id, ))
@@ -45,6 +45,14 @@ class DbAct:
 
     def add_request(self, user_id, quanity, type):
         self.__db.db_write(f'INSERT INTO request (tg_id, quanity, type) VALUES (?, ?, ?)', (user_id, quanity, type))
+
+    def update_dialog_status(self, user_id, request_id):
+        self.__db.db_write('UPDATE users SET current_dialog = ? WHERE tg_id = ?', (request_id, user_id))
+
+    def get_dialog_status(self, user_id):
+        data = self.__db.db_read('SELECT current_dialog FROM users WHERE tg_id = ?', (user_id,))
+        if len(data) > 0:
+            return data[0][0]
 
     def get_request_by_user_id(self, user_id, type):
         request = self.__db.db_read('SELECT request_id FROM request WHERE tg_id = ? AND type = ?', (user_id, type))
@@ -79,6 +87,10 @@ class DbAct:
     def add_money(self, user_id, request_id):
         request = self.__db.db_read('SELECT money FROM users WHERE tg_id = ?', (user_id, ))[0][0]
         self.__db.db_write('UPDATE users SET money = ? WHERE tg_id = ?', (int(request) + int(self.get_money_from_request_id(request_id)), user_id))
+
+    def convert_money_to_gold(self, user_id):
+        pay = self.__db.db_read('SELECT money, gold FROM users WHERE tg_id = ?', (user_id, ))[0]
+        self.__db.db_write('UPDATE users SET money = 0, gold = ? WHERE tg_id = ?', (int(pay[0]) + int(round(100 / 66 * int(pay[1]), 2)), user_id))
 
 
     def del_request_by_request_id(self, request_id):
