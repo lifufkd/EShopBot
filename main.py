@@ -20,18 +20,19 @@ def hello_msg(message, buttons):
     bot.send_message(message.chat.id, text='▶Для продолжения выбери нужную команду на клавиатуре👇\n'
                                            '🙋‍♂️Если есть дополнительные вопросы по поводу бота, обратитесь в '
                                            'Тех.Поддержку\n'
-                                           '📊Курс: 0.70', reply_markup=buttons.main_chat_btns())
+                                           '📊Курс: 0.66', reply_markup=buttons.main_chat_btns())
 
 
 def broadcast_msg(user_id, msg_id, type, money):
+    buttons = Bot_inline_btns()
     type_msg = {False: f'Запрос на пополнение баланса на сумму {money}', True: f'Запрос на вывод голды на сумму {money}'}
     if db_actions.get_request_by_user_id(user_id, type) is not None:
         personal_data = db_actions.get_user(user_id)
         for admin in db_actions.get_admins():
             bot.send_message(admin, f'{type_msg[type]}\nНикнейм: @{personal_data[0]}\nИмя: {personal_data[1]}\nФамилия: '
                                     f'{personal_data[2]}\nID Пользователя: {user_id}\nID обращения: '
-                                    f'{db_actions.get_request_by_user_id(user_id, type)}\nПодтвердите верификацию '
-                                    f'(/accept "ID обращения") или отклоните (/reject "ID обращения")')
+                                    f'{db_actions.get_request_by_user_id(user_id, type)}\nПодтвердите верификацию ',
+                             reply_markup=buttons.accept_deny_btns(db_actions.get_request_by_user_id(user_id, type)))
             bot.forward_message(chat_id=admin, from_chat_id=user_id, message_id=msg_id)
 
 
@@ -70,7 +71,13 @@ def main():
             if code is not None:
                 if code == 0:
                     try:
-                        bot.send_message(message.chat.id, text=f'1. Переведите {int(message.text)} рублей(-я) на карту XXXXXX\n2.После того как перевели - отправьте скриншот чека.')
+                        bot.send_message(message.chat.id, text=f'📩Отправьте деньги на Сбербанк по реквизитам:\n'
+                                                               f'79889676131 Сбербанк❤‍🩹\n'
+                                                               f'5228600516931674 Сбербанк✌\n'
+                                                               f'Получатель:Сергей Е.\n'
+                                                               f'На ☕ тоже можно скинуть😉\n'
+                                                               f'💲Сумма: {int(message.text)}₽\n'
+                                                               f'📷Отправьте нам скриншот чека.')
                         temp_user_data.temp_data(user_id)[user_id][1] = int(message.text)
                         temp_user_data.temp_data(user_id)[user_id][0] = 1
                     except:
@@ -111,22 +118,23 @@ def main():
                 elif message.text == '😄Отзывы':
                     bot.send_message(message.chat.id, text='https://t.me/AdviceOTZIVI')
                 elif message.text == '📉Курс':
-                    bot.send_message(message.chat.id, text='✅Курс: 0.7 | 70₽ = 100G')
+                    bot.send_message(message.chat.id, text='✅Курс: 0.66 | 66₽ = 100G')
                 elif message.text == '🔢Калькулятор':
                     bot.send_message(message.chat.id, text='Выберите действие⤵️', reply_markup=buttons.calculator_btns())
                 elif message.text == '✨Посчитать рубли в голде':
-                    bot.send_message(message.chat.id, text='✍️Введите сумму (в RUB)')
+                    bot.send_message(message.chat.id, text='✍️Введите сумму (в ₽)')
                 elif message.text == '✨Посчитать голду в рублях':
-                    bot.send_message(message.chat.id, text='✍️Введите сумму (в голде)')
+                    bot.send_message(message.chat.id, text='✍️Введите сумму (в G)')
                 elif message.text == '🏠Главное меню':
                     hello_msg(message, buttons)
                 elif message.text == '👨‍💻Поддержка':
                     bot.send_message(message.chat.id, text='https://t.me/YT_ADVICE')
                 elif message.text == '🤖Профиль':
-                    bot.send_message(message.chat.id, text=f'📋Информация о {message.from_user.first_name}\n💸Денег: 0 '
-                                                           f'руб\n🍯Золото: 0 G')
+                    bot.send_message(message.chat.id, text=f'📋Информация о {message.from_user.first_name}\n💸Денег: 0₽ '
+                                                           f'руб\n🍯Золото: 0G')
         else:
             bot.send_message(user_id, 'Введите /start для запуска бота')
+
 
     bot.polling(none_stop=True)
 

@@ -50,3 +50,10 @@ class Bot_inline_btns:
         main_menu = types.KeyboardButton(text="🏠Главное меню")
         keyboard.add(main_menu)
         return keyboard
+
+    def accept_deny_btns(self, id):
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        accept = types.KeyboardButton(f'✅Подтвердить платеж {id}')
+        deny = types.KeyboardButton(f'❌Отклонить платеж {id}')
+        keyboard.add(accept, deny)
+        return keyboard
