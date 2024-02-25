@@ -38,12 +38,13 @@ def broadcast_msg(user_id, type, money, msg_id=None):
                                  reply_markup=buttons.accept_deny_btns(db_actions.get_request_by_user_id(user_id, type)))
                 bot.forward_message(chat_id=admin, from_chat_id=user_id, message_id=msg_id)
         else:
-            random_admin = random.choice(admins)
+            random_admin = random.choice(list(admins))
             db_actions.update_dialog_status(random_admin, db_actions.get_request_by_user_id(user_id, type))
             bot.send_message(random_admin,
                              f'{type_msg[type]}\nНикнейм: @{personal_data[0]}\nИмя: {personal_data[1]}\nФамилия: '
                              f'{personal_data[2]}\nID Пользователя: {user_id}\nID обращения: '
-                             f'{db_actions.get_request_by_user_id(user_id, type)}\nПодтвердите верификацию ')
+                             f'{db_actions.get_request_by_user_id(user_id, type)}\nПодтвердите верификацию ',
+                             reply_markup=buttons.end_chat())
 
 def main():
     @bot.message_handler(commands=['start'])
@@ -82,21 +83,20 @@ def main():
                     temp_user_data.temp_data(user_id)[user_id][0] = None
                 elif code == 2:
                     try:
-                        if int(message.text) < 100:
+                        if 100 < int(message.text) <= int(db_actions.get_gold(user_id)):
+                            db_actions.add_request(user_id, int(message.text), True)
+                            broadcast_msg(user_id, True, int(message.text))
+                        else:
                             raise
-                        db_actions.add_request(user_id, int(message.text), True)
-                        broadcast_msg(user_id, True, int(message.text))
-                        temp_user_data.temp_data(user_id)[user_id][0] = None
-                        temp_user_data.temp_data(user_id)[user_id][1] = int(message.text)
-                        temp_user_data.temp_data(user_id)[user_id][0] = 3
                     except:
                         bot.send_message(message.chat.id, '❌Введена неверная сумма❌')
-                elif code == 3:
-                    pass # здесь обработчик вывода голды
-                elif code == 4:
-                    pass
+                    finally:
+                        temp_user_data.temp_data(user_id)[user_id][0] = None
             else:
-                if message.text == '💰Пополнить':
+                if db_actions.get_dialog_status_client(user_id):
+                    admin_id = db_actions.get_admin_id_from_request_id(user_id, True)
+                    bot.forward_message(chat_id=admin_id, from_chat_id=user_id, message_id=message.id)
+                elif message.text == '💰Пополнить':
                     if db_actions.get_request_by_user_id(user_id, False) is None:
                         bot.send_message(message.chat.id, text='✏ Введите сумму для пополнения баланса в рублях',
                                          reply_markup=buttons.replenish_btns())
@@ -143,7 +143,14 @@ def main():
                         db_actions.del_request_by_request_id(message.text[8:])
                     elif db_actions.get_dialog_status(user_id) is not None:
                         client_id = db_actions.get_request_by_request_id(db_actions.get_dialog_status(user_id))
-                        bot.forward_message(chat_id=client_id, from_chat_id=user_id, message_id=message.id)
+                        if message.text == "✅Закончить чат":
+                            db_actions.del_request_by_request_id(db_actions.get_dialog_status(user_id))
+                            db_actions.update_dialog_status(user_id, None)
+                            db_actions.update_dialog_open(client_id, False)
+                            bot.send_message(client_id, '❌Чат завершён❌')
+                            bot.send_message(user_id, '❌Чат завершён❌')
+                        else:
+                            bot.forward_message(chat_id=client_id, from_chat_id=user_id, message_id=message.id)
                     else:
                         bot.send_message(user_id, '❌Нет доступных действий❌')
 

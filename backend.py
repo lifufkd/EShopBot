@@ -51,10 +51,24 @@ class DbAct:
         if len(data) > 0:
             return data[0][0]
 
+    def update_dialog_open(self, user_id, status):
+        self.__db.db_write('UPDATE users SET dialog_open = ? WHERE tg_id = ?', (status, user_id))
+
+    def get_dialog_status_client(self, user_id):
+        data = self.__db.db_read('SELECT dialog_open FROM users WHERE tg_id = ?', (user_id,))
+        if len(data) > 0:
+            return data[0][0]
+
     def get_request_by_user_id(self, user_id, type):
         request = self.__db.db_read('SELECT request_id FROM request WHERE tg_id = ? AND type = ?', (user_id, type))
         if len(request) > 0:
             return request[0][0]
+
+    def get_admin_id_from_request_id(self, user_id, type):
+        req_id = self.get_request_by_user_id(user_id, type)
+        data = self.__db.db_read('SELECT tg_id FROM users WHERE current_dialog = ?', (req_id, ))
+        if len(data) > 0:
+            return data[0][0]
 
     def get_user(self, user_id):
         user = self.__db.db_read('SELECT nickname, first_name, last_name FROM users WHERE tg_id = ?', (user_id, ))
@@ -89,6 +103,10 @@ class DbAct:
         pay = self.__db.db_read('SELECT money, gold FROM users WHERE tg_id = ?', (user_id, ))[0]
         self.__db.db_write('UPDATE users SET money = 0, gold = ? WHERE tg_id = ?', (int(pay[0]) + int(round(100 / 66 * int(pay[1]), 2)), user_id))
 
+    def get_gold(self, user_id):
+        request = self.__db.db_read('SELECT gold FROM users WHERE tg_id = ?', (user_id, ))
+        if len(request) > 0:
+            return request[0][0]
 
     def del_request_by_request_id(self, request_id):
         self.__db.db_write(f'DELETE FROM request WHERE request_id = ?', (request_id, ))
