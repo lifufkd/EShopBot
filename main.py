@@ -44,7 +44,11 @@ def broadcast_msg(user_id, type, money, msg_id=None):
                                      db_actions.get_request_by_user_id(user_id, type)))
                 bot.forward_message(chat_id=admin, from_chat_id=user_id, message_id=msg_id)
         else:
-            random_admin = random.choice(list(admins))
+            print(2)
+            print(db_actions.get_admins_not_busy())
+            print(3)
+            random_admin = random.choice(list(db_actions.get_admins_not_busy()))
+            print(random_admin)
             db_actions.update_dialog_status(random_admin, db_actions.get_request_by_user_id(user_id, type))
             bot.send_message(random_admin,
                              f'{type_msg[type]}\nНикнейм: @{personal_data[0]}\nИмя: {personal_data[1]}\nФамилия: '
@@ -91,11 +95,11 @@ def main():
                     temp_user_data.temp_data(user_id)[user_id][0] = None
                 elif code == 2:
                     try:
-                        bot.send_message(message.chat.id, text='Ваша заявка зарегестрирована✅\n'
-                                                               'С вами свяжется администратор!')
                         if 100 <= int(message.text) <= int(db_actions.get_gold(user_id)):
                             db_actions.add_request(user_id, int(message.text), True)
                             db_actions.update_dialog_open(user_id, True)
+                            bot.send_message(message.chat.id, text='Ваша заявка зарегестрирована✅\n'
+                                                                   'С вами свяжется администратор!')
                             broadcast_msg(user_id, True, int(message.text))
                         else:
                             raise
@@ -127,12 +131,15 @@ def main():
                     print(admin_id)
                     bot.forward_message(chat_id=admin_id, from_chat_id=user_id, message_id=message.id)
                 elif message.text == '💰Пополнить':
-                    if db_actions.get_request_by_user_id(user_id, False) is None:
-                        bot.send_message(message.chat.id, text='✏ Введите сумму для пополнения баланса в рублях',
-                                         reply_markup=buttons.replenish_btns())
-                        temp_user_data.temp_data(user_id)[user_id][0] = 0
+                    if db_actions.quanity_not_busy_admins() > 0:
+                        if db_actions.get_request_by_user_id(user_id, False) is None:
+                            bot.send_message(message.chat.id, text='✏ Введите сумму для пополнения баланса в рублях',
+                                             reply_markup=buttons.replenish_btns())
+                            temp_user_data.temp_data(user_id)[user_id][0] = 0
+                        else:
+                            bot.send_message(message.chat.id, text='✅Заявка уже создана✅')
                     else:
-                        bot.send_message(message.chat.id, text='✅Заявка уже создана✅')
+                        bot.send_message(message.chat.id, text='❌Все модераторы заняты❌')
                 elif message.text == '🍯Купить голду':
                     bot.send_message(message.chat.id, text='Ваш баланс:\n')
                 elif message.text == '📨Вывод':
@@ -181,6 +188,8 @@ def main():
                     if db_actions.get_dialog_status(user_id) is not None:
                         client_id = db_actions.get_request_by_request_id(db_actions.get_dialog_status(user_id))
                         if message.text == "✅Закончить чат":
+                            db_actions.flush_gold(client_id, db_actions.get_request_money_by_req_id(
+                                db_actions.get_dialog_status(user_id)))
                             db_actions.del_request_by_request_id(db_actions.get_dialog_status(user_id))
                             db_actions.update_dialog_status(user_id, None)
                             db_actions.update_dialog_open(client_id, False)
