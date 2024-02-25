@@ -15,6 +15,7 @@ from frontend import Bot_inline_btns
 
 #####################################
 config_name = 'secrets.json'
+my_channel_id = -1002020244592
 
 
 ####################################################################
@@ -57,12 +58,18 @@ def main():
     @bot.message_handler(commands=['start'])
     def start_msg(message):
         buttons = Bot_inline_btns()
+        statuss = ['member']
         user_id = message.chat.id
         db_actions.add_user(user_id, message.from_user.username, message.from_user.first_name,
                             message.from_user.last_name)
-        bot.send_message(message.chat.id, text='Для использования бота, Вам необходимо подписаться на каналы ниже⬇️',
-                         reply_markup=buttons.start_btns())
-        hello_msg(message, buttons)
+        for i in statuss:
+            if i == bot.get_chat_member(chat_id=my_channel_id, user_id=message.from_user.id).status:
+                hello_msg(message, buttons)
+                break
+            else:
+                bot.send_message(message.chat.id,
+                                 text='Для использования бота, Вам необходимо подписаться на каналы ниже⬇️',
+                                 reply_markup=buttons.start_btns())
 
     @bot.message_handler(content_types=['text', 'photo'])
     def text(message):
