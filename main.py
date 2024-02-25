@@ -46,22 +46,6 @@ def main():
                          reply_markup=buttons.start_btns())
         hello_msg(message, buttons)
 
-    @bot.message_handler(commands=['accept', 'reject'])
-    def admin_commands(message):
-        command = message.text.replace('/', '')
-        user_id = message.chat.id
-        if db_actions.user_is_existed(user_id) and user_id in db_actions.get_admins():
-            candidate_id = db_actions.get_request_by_request_id(command[7:])
-            if candidate_id is not None:
-                if command[:6] == 'accept':
-                    db_actions.add_money(candidate_id, command[7:])
-                    bot.send_message(candidate_id, '✅Заявка одобрена, баланс пополнен!✅')
-                elif command[:6] == 'reject':
-                    bot.send_message(candidate_id, '❌Заявка отклонена, чек неверный❌')
-                db_actions.del_request_by_request_id(command[7:])
-            else:
-                bot.send_message(candidate_id, '❌ID заявки не существует❌')
-
     @bot.message_handler(content_types=['text', 'photo'])
     def text(message):
         user_id = message.chat.id
@@ -97,6 +81,8 @@ def main():
                         bot.send_message(message.chat.id, '❌Введена неверная сумма❌')
                 elif code == 3:
                     pass # здесь обработчик вывода голды
+                elif code == 4:
+                    pass
             else:
                 if message.text == '💰Пополнить':
                     if db_actions.get_request_by_user_id(user_id, False) is None:
@@ -108,7 +94,7 @@ def main():
                 elif message.text == '🍯Купить голду':
                     bot.send_message(message.chat.id, text='Ваш баланс:\n')
                 elif message.text == '📨Вывод':
-                    if db_actions.get_request_by_user_id(user_id, False) is None:
+                    if db_actions.get_request_by_user_id(user_id, True) is None:
                         bot.send_message(message.chat.id,
                                          text='❗️Вывод работает от 100G❗️\nСколько вы хотите вывести голды?',
                                          reply_markup=buttons.withdrawal_btns())
@@ -120,7 +106,8 @@ def main():
                 elif message.text == '📉Курс':
                     bot.send_message(message.chat.id, text='✅Курс: 0.66 | 66₽ = 100G')
                 elif message.text == '🔢Калькулятор':
-                    bot.send_message(message.chat.id, text='Выберите действие⤵️', reply_markup=buttons.calculator_btns())
+                    bot.send_message(message.chat.id, text='Выберите действие⤵️',
+                                     reply_markup=buttons.calculator_btns())
                 elif message.text == '✨Посчитать рубли в голде':
                     bot.send_message(message.chat.id, text='✍️Введите сумму (в ₽)')
                 elif message.text == '✨Посчитать голду в рублях':
@@ -132,6 +119,25 @@ def main():
                 elif message.text == '🤖Профиль':
                     bot.send_message(message.chat.id, text=f'📋Информация о {message.from_user.first_name}\n💸Денег: 0₽ '
                                                            f'руб\n🍯Золото: 0G')
+                elif user_id in db_actions.get_admins():
+                    candidate_id, type = db_actions.get_request_by_request_id(message.text[8:])
+                    if candidate_id is not None:
+                        if message.text[:7] == '✅accept':
+                            if not type:
+                                db_actions.add_money(candidate_id, message.text[8:])
+                                db_actions.convert_money_to_gold(candidate_id)
+                                bot.send_message(candidate_id, '✅Заявка одобрена, баланс пополнен!✅')
+                            else:
+                                pass
+                        elif message.text[:7] == '❌reject':
+                            if not type:
+                                bot.send_message(candidate_id, '❌Заявка отклонена, чек неверный❌')
+                            else:
+                                pass
+                        db_actions.del_request_by_request_id(message.text[8:])
+                    else:
+                        bot.send_message(user_id, '❌ID заявки не существует❌')
+
         else:
             bot.send_message(user_id, 'Введите /start для запуска бота')
 

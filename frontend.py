@@ -53,7 +53,7 @@ class Bot_inline_btns:
 
     def accept_deny_btns(self, id):
         keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
-        accept = types.KeyboardButton(f'✅Подтвердить платеж {id}')
-        deny = types.KeyboardButton(f'❌Отклонить платеж {id}')
+        accept = types.KeyboardButton(f'✅accept {id}')
+        deny = types.KeyboardButton(f'❌reject {id}')
         keyboard.add(accept, deny)
         return keyboard

@@ -64,9 +64,9 @@ class DbAct:
         return set(data)
 
     def get_request_by_request_id(self, request):
-        request = self.__db.db_read('SELECT tg_id FROM request WHERE request_id = ?', (request, ))
+        request = self.__db.db_read('SELECT tg_id, type FROM request WHERE request_id = ?', (request, ))
         if len(request) > 0:
-            return request[0][0]
+            return request[0][0], request[0][1]
 
     def get_money_from_request_id(self, request_id):
         request = self.__db.db_read('SELECT quanity FROM request WHERE request_id = ?', (request_id, ))
@@ -76,6 +76,10 @@ class DbAct:
     def add_money(self, user_id, request_id):
         request = self.__db.db_read('SELECT money FROM users WHERE tg_id = ?', (user_id, ))[0][0]
         self.__db.db_write('UPDATE users SET money = ? WHERE tg_id = ?', (int(request) + int(self.get_money_from_request_id(request_id)), user_id))
+
+    def convert_money_to_gold(self, user_id):
+        money, gold = self.__db.db_read('SELECT money, gold FROM users WHERE tg_id = ?', (user_id, ))[0][0]
+        self.__db.db_write('UPDATE users SET money = 0, gold = ? WHERE tg_id = ?', (int(gold) + int(round(100 / 66 * money, 2)), user_id))
 
 
     def del_request_by_request_id(self, request_id):
