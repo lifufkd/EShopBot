@@ -32,7 +32,7 @@ class DB:
             first_name TEXT,
             last_name TEXT,
             current_dialog BOOL,
-            dialog_open BOOL
+            dialog_open BOOL,
             UNIQUE(tg_id)
             )
             ''')
