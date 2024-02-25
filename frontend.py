@@ -56,3 +56,9 @@ class Bot_inline_btns:
         deny = types.KeyboardButton(f'❌reject {id}')
         keyboard.add(accept, deny)
         return keyboard
+
+    def end_chat(self):
+        keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        chat_end = types.KeyboardButton(text="✅Закончить чат")
+        keyboard.add(chat_end)
+        return keyboard

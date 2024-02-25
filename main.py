@@ -72,12 +72,12 @@ def main():
                 if code == 0:
                     try:
                         bot.send_message(message.chat.id, text=f'📩Отправьте деньги на Сбербанк по реквизитам:\n'
-                                                               f'79889676131 Сбербанк❤‍🩹\n'
-                                                               f'5228600516931674 Сбербанк✌\n'
-                                                               f'Получатель:Сергей Е.\n'
+                                                               f'<code>79889676131</code> Сбербанк❤‍🩹\n'
+                                                               f'<code>5228600516931674</code> Сбербанк✌\n'
+                                                               f'Получатель: Сергей Е.\n'
                                                                f'На ☕ тоже можно скинуть😉\n'
                                                                f'💲Сумма: {int(message.text)}₽\n'
-                                                               f'📷Отправьте нам скриншот чека.')
+                                                               f'📷Отправьте нам скриншот чека.', parse_mode='html')
                         temp_user_data.temp_data(user_id)[user_id][1] = int(message.text)
                         temp_user_data.temp_data(user_id)[user_id][0] = 1
                     except:
@@ -96,7 +96,27 @@ def main():
                     except:
                         bot.send_message(message.chat.id, '❌Введена неверная сумма❌')
                 elif code == 3:
-                    pass # здесь обработчик вывода голды
+                    pass
+                elif code == 4:
+                    pass
+                elif code == 5:
+                    try:
+                        rub = int(message.text)
+                        result = round(100 / 66 * rub, 2)
+                        bot.send_message(message.chat.id, f'💵{rub}₽ = {result}G')
+                    except:
+                        bot.send_message(message.chat.id, '❌Введена неверная сумма❌')
+                    finally:
+                        temp_user_data.temp_data(user_id)[user_id][0] = None
+                elif code == 6:
+                    try:
+                        gold = int(message.text)
+                        result = round(gold * 66 / 100, 2)
+                        bot.send_message(message.chat.id, f'{gold}G = 💵{result}₽')
+                    except:
+                        bot.send_message(message.chat.id, '❌Введена неверная сумма❌')
+                    finally:
+                        temp_user_data.temp_data(user_id)[user_id][0] = None
             else:
                 if message.text == '💰Пополнить':
                     if db_actions.get_request_by_user_id(user_id, False) is None:
@@ -105,8 +125,6 @@ def main():
                         temp_user_data.temp_data(user_id)[user_id][0] = 0
                     else:
                         bot.send_message(message.chat.id, text='✅Заявка уже создана✅')
-                elif message.text == '🍯Купить голду':
-                    bot.send_message(message.chat.id, text='Ваш баланс:\n')
                 elif message.text == '📨Вывод':
                     if db_actions.get_request_by_user_id(user_id, False) is None:
                         bot.send_message(message.chat.id,
@@ -120,11 +138,14 @@ def main():
                 elif message.text == '📉Курс':
                     bot.send_message(message.chat.id, text='✅Курс: 0.66 | 66₽ = 100G')
                 elif message.text == '🔢Калькулятор':
-                    bot.send_message(message.chat.id, text='Выберите действие⤵️', reply_markup=buttons.calculator_btns())
+                    bot.send_message(message.chat.id, text='Выберите действие⤵️',
+                                     reply_markup=buttons.calculator_btns())
                 elif message.text == '✨Посчитать рубли в голде':
                     bot.send_message(message.chat.id, text='✍️Введите сумму (в ₽)')
+                    temp_user_data.temp_data(user_id)[user_id][0] = 5
                 elif message.text == '✨Посчитать голду в рублях':
                     bot.send_message(message.chat.id, text='✍️Введите сумму (в G)')
+                    temp_user_data.temp_data(user_id)[user_id][0] = 6
                 elif message.text == '🏠Главное меню':
                     hello_msg(message, buttons)
                 elif message.text == '👨‍💻Поддержка':
@@ -132,6 +153,21 @@ def main():
                 elif message.text == '🤖Профиль':
                     bot.send_message(message.chat.id, text=f'📋Информация о {message.from_user.first_name}\n💸Денег: 0₽ '
                                                            f'руб\n🍯Золото: 0G')
+                elif user_id in db_actions.get_admins():
+                    candidate_id = db_actions.get_request_by_request_id(message.text[8:])
+                    if candidate_id is not None:
+                        if message.text[:7] == '✅accept':
+                            db_actions.add_money(candidate_id, message.text[8:])
+                            db_actions.convert_money_to_gold(candidate_id)
+                            bot.send_message(candidate_id, '✅Заявка одобрена, баланс пополнен!✅')
+                        elif message.text[:7] == '❌reject':
+                            bot.send_message(candidate_id, '❌Заявка отклонена, чек неверный❌')
+                        db_actions.del_request_by_request_id(message.text[8:])
+                    elif db_actions.get_dialog_status(user_id) is not None:
+                        client_id = db_actions.get_request_by_request_id(db_actions.get_dialog_status(user_id))
+                        bot.forward_message(chat_id=client_id, from_chat_id=user_id, message_id=message.id)
+                    else:
+                        bot.send_message(user_id, '❌Нет доступных действий❌')
         else:
             bot.send_message(user_id, 'Введите /start для запуска бота')
 
